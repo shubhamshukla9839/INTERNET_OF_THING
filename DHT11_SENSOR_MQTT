@@ -1,0 +1,82 @@
+# VISULIZATION OF SENSOR HUMIDITY AND TEMPERATURE DATA ON DASHBOARD OF "io.adafruit.com" THROUGH MQTT PROTOCOL ->>>>>>>
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+import network
+from machine import Pin
+import dht
+import socket
+from umqtt.robust import MQTTClient
+import time
+from time import sleep
+import ussl
+import os
+import sys
+
+ADAFRUIT_IO_URL = b'io.adafruit.com'
+ADAFRUIT_USERNAME = b'shubham55555'
+ADAFRUIT_IO_KEY = b'aio_Ftkm44uG6IU0RU9dSRpK8Z1EG0wf'
+ADAFRUIT_IO_FEEDNAME1 = b'temperature'
+ADAFRUIT_IO_FEEDNAME2 = b'humidity'
+MESUREMENT_INTERVAL = 2
+
+
+
+random_num = int.from_bytes(os.urandom(3),'little')
+mqtt_client_id = bytes('client_'+str(random_num),'utf-8')
+
+client = MQTTClient( client_id = mqtt_client_id,
+                     server = ADAFRUIT_IO_URL,
+                     user = ADAFRUIT_USERNAME,
+                     password = ADAFRUIT_IO_KEY,
+                     ssl = False )
+
+mqtt_feedname1 = bytes('{:s}/feeds/{:s}'.format(ADAFRUIT_USERNAME,ADAFRUIT_IO_FEEDNAME1), 'utf-8')
+mqtt_feedname2 = bytes('{:s}/feeds/{:s}'.format(ADAFRUIT_USERNAME,ADAFRUIT_IO_FEEDNAME2) , 'utf-8')
+
+
+def connect_to_ap():
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    if not wlan.isconnected():
+        print('connecting to network')
+        wlan.scan()
+        wlan.connect('Shubham', '8787220035')
+        while not wlan.isconnected():
+            pass
+    print('network config', wlan.ifconfig())
+    try :
+        client.connect()
+    except Exception as e :
+        print('could not connect to mqtt server () {}'.format(type(e).__name__,e))
+
+def Send_Data(tTemp, tHumid):
+    client.publish(mqtt_feedname1,bytes(str(tTemp),'utf-8'),qos=0)
+    client.publish(mqtt_feedname2, bytes(str(tHumid), 'utf-8'), qos=0)
+
+
+def main():
+    connect_to_ap()
+    sensor = dht.DHT11(Pin(14))   #D5
+    last_mesurement_time = 0
+    while True:
+        try:
+            sleep(2)
+            current_time = time.time()
+            sensor.measure()
+            temp = sensor.temperature()
+            hum = sensor.humidity()
+            temp_f = temp * (9 / 5) + 32.0
+            print('Temperature: %3.1f C' % temp)
+            print('Temperature: %3.1f F' % temp_f)
+            print('Humidity: %3.1f %%' % hum)
+        except OSError as e:
+            print('Failed to read sensor.')
+
+        if current_time - last_mesurement_time > MESUREMENT_INTERVAL:
+            print('temperature', temp, 'humidity', hum)
+            Send_Data(temp, hum)
+            last_mesurement_time = current_time
+
+
+if __name__ == '__main__':
+    main()
