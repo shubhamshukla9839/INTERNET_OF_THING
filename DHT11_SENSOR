@@ -1,5 +1,8 @@
 
-CONNECT NODE MCU TO THE " THING SPEAK " AND VISULIZE SENSORS ( HUMIDITY , TEMPERATURE ) [ DHT11 ]  DATA ON GRAPH :----------------
+CONNECT NODE MCU TO THE " THING SPEAK " AND VISULIZE SENSORS ( HUMIDITY , TEMPERATURE ) [ DHT11 ]  DATA ON GRAPH :=>>>>>
+
+{  USING HTTP PROTOCOL } 
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 import network
 from machine import Pin
